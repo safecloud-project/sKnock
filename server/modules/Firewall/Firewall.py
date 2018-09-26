@@ -22,6 +22,7 @@ import logging
 import random
 import string
 import sys
+import threading
 from multiprocessing import Process, Pipe
 
 from common.modules.Platform import PlatformUtils
@@ -51,7 +52,7 @@ class Firewall:
         atexit.register(self.shutdown)
 
     def startup(self):
-        LOG.info("Starting Firewall handling service...")
+        LOG.debug("Starting Firewall handling service...")
 
         if(self.platform == PlatformUtils.LINUX):
             self.firewallService.start()
@@ -61,11 +62,10 @@ class Firewall:
             pass
 
         self._executeTask(["startService", self.config.firewallPolicy])
-        self.openPortsList = set()
 
 
     def shutdown(self):
-        LOG.info("Stopping Firewall handling service...")
+        LOG.debug("Stopping Firewall handling service...")
 
         self._executeTask(["stopService"])
         self.firewallServicePipe.close()
@@ -77,28 +77,24 @@ class Firewall:
             # TODO: implement for windows
             pass
 
-
     def openPortForClient(self, port, ipVersion, protocol, addr):
 
         openPort = hash(str(port) + str(ipVersion) + protocol + addr)
         if openPort in self.openPortsList:
-            LOG.info('%s Port: %s for host: %s is already open!', protocol, port, addr)
+            LOG.debug('%s port %s for host %s is already open.', protocol, port, addr)
             raise PortAlreadyOpenException
 
         self._executeTask(['openPort', port, ipVersion, protocol, addr])
         self.openPortsList.add(openPort)
-        LOG.info('%s Port: %s opened for host: %s from: %s until: %s',
+        LOG.info('%s port %s opened for host %s; will be closed in %s seconds.',
                  protocol, port, addr,
-                 datetime.datetime.now(),
-                 datetime.datetime.now() +
-                 datetime.timedelta(0, self.config.PORT_OPEN_DURATION_IN_SECONDS))
-
+                 self.config.PORT_OPEN_DURATION_IN_SECONDS)
 
 
     def closePortForClient(self, port, ipVersion, protocol, addr):
         self._executeTask(['closePort', port, ipVersion, protocol, addr])
         self.openPortsList.remove(hash(str(port) + str(ipVersion) + protocol + addr))
-        LOG.info('%s Port: %s closed for host: %s at: %s', protocol, port, addr, datetime.datetime.now())
+        LOG.info('%s port %s closed for host %s.', protocol, port, addr)
 
 
     @synchronized

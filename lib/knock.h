@@ -21,6 +21,16 @@
  * @author Sree Harsha Totakura <sreeharsha@totakura.in>
  */
 
+/* Also support C++ to use our library  */
+#ifdef __cplusplus
+extern "C"
+{
+#if 0                           /* keep Emacsens' auto-indent happy */
+}
+#endif
+#endif
+
+
  #define KNOCK_UDP 0
  #define KNOCK_TCP 1
 
@@ -47,7 +57,9 @@ knock_init();
  * Function to create a new knock handle
  *
  * @param timeout number of seconds to wait before retrying the knock attempt
- * @param retries number of times to retry
+ * @param retries number of times to retry until the knocking is successful;
+ *          this is only relevant if @a verify is set to 1 and the protocol used
+ *          in knock_knock() is @a KNOCK_TCP
  * @param verify flag to verify whether the port-knocking is successful or not
  * @param server_cert_path path of the server certificate
  * @param client_cert_path path of the client certificate
@@ -93,5 +105,11 @@ knock_knock(struct KNOCK_Handle *handle,
             unsigned short port,
             int protocol);
 
+#if 0                           /* keep Emacsens' auto-indent happy */
+{
+#endif
+#ifdef __cplusplus
+}
+#endif
 
 /* end of lib/knock.h */
